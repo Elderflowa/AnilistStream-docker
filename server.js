@@ -6,21 +6,23 @@ const {
   getAnimeDetails,
   getUserWatchStatus,
   updateUserWatchList,
+  getPlanningAnime,
+  getWatchingAnime,
 } = require("./src/anilist");
 const { getAnimeByAnilistId, getEpisodeUrls } = require("./src/anicli");
 
 const app = express();
 app.use(cors());
 app.use(express.static("public")); // Serve static HTML from public/
-// app.use((req, res, next) => {
-//   console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
-//   next();
-// });
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
+  next();
+});
 
 // ------------------- MANIFEST -------------------
 const manifest = {
   id: "community.AnilistStream",
-  version: "0.0.1",
+  version: "0.0.2",
   catalogs: [
     {
       type: "series",
@@ -32,6 +34,16 @@ const manifest = {
           isRequired: true,
         },
       ],
+    },
+    {
+      type: "series",
+      id: "anilist_watching",
+      name: "Watching Now",
+    },
+    {
+      type: "series",
+      id: "anilist_planning",
+      name: "Planning to Watch",
     },
   ],
   resources: [
@@ -98,9 +110,33 @@ app.get("/:anilistToken/manifest.json", (req, res) => {
 });
 
 // Catalog
+
+app.get("/:anilistToken/catalog/:type/:id.json", async (req, res) => {
+  try {
+    const { anilistToken, type, id } = req.params;
+
+    if (id === "anilist_planning" && anilistToken) {
+      const planningAnime = await getPlanningAnime(anilistToken);
+      return res.json({ metas: planningAnime });
+    } else if (id === "anilist_watching" && anilistToken) {
+      const watchingAnime = await getWatchingAnime(anilistToken);
+      return res.json({ metas: watchingAnime });
+    }
+  } catch (err) {
+    console.error("Catalog error:", err);
+    res.status(500).json({ metas: [] });
+  }
+});
+
 app.get("/:anilistToken/catalog/:type/:id/:extra.json", async (req, res) => {
   try {
     const { anilistToken, type, id, extra } = req.params;
+
+    if (id === "anilist_planning" && anilistToken) {
+      const planningAnime = await getPlanningAnime(anilistToken);
+      return res.json({ metas: planningAnime });
+    }
+
     const searchQuery =
       extra && extra.startsWith("search=")
         ? decodeURIComponent(extra.split("=")[1])

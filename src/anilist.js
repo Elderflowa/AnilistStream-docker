@@ -42,6 +42,7 @@ async function searchAnime(searchQuery, type) {
     type: "series",
     name: anime.title.english || anime.title.romaji || anime.title.native,
     poster: anime.coverImage.large,
+    format: anime.format,
   }));
 }
 
@@ -161,9 +162,173 @@ async function updateUserWatchList(anilistToken, anilistId, progress, status) {
   return data.data.SaveMediaList || null;
 }
 
+async function getPlanningAnime(anilistToken) {
+  // First, get the user ID
+  const viewerQuery = `
+    query {
+      Viewer {
+        id
+        name
+      }
+    }`;
+
+  const viewerResponse = await fetch("https://graphql.anilist.co", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      Authorization: `Bearer ${anilistToken}`,
+    },
+    body: JSON.stringify({
+      query: viewerQuery,
+    }),
+  });
+  const viewerData = await viewerResponse.json();
+  const userId = viewerData.data.Viewer.id;
+
+  // Now fetch the planning anime with the user ID
+  const query = `
+    query ($type: MediaType!, $userId: Int!) {
+      MediaListCollection(type: $type, userId: $userId, status: PLANNING) {
+        lists {
+          name
+          entries {
+            id
+            media {
+              id
+              title {
+                romaji
+                english
+                native
+              }
+              coverImage {
+                large
+              }
+              format
+            }
+          }
+        }
+      }
+    }`;
+
+  const variables = { type: "ANIME", userId: userId };
+
+  const response = await fetch("https://graphql.anilist.co", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      Authorization: `Bearer ${anilistToken}`,
+    },
+    body: JSON.stringify({
+      query: query,
+      variables: variables,
+    }),
+  });
+  const data = await response.json();
+
+  let planningAnime = [];
+  data.data.MediaListCollection.lists.forEach((list) => {
+    list.entries.forEach((entry) => {
+      const anime = entry.media;
+      planningAnime.push({
+        id: "ani_" + anime.id.toString(),
+        type: "series",
+        name: anime.title.english || anime.title.romaji || anime.title.native,
+        poster: anime.coverImage.large,
+        format: anime.format,
+      });
+    });
+  });
+  return planningAnime.reverse();
+}
+
+async function getWatchingAnime(anilistToken) {
+  // First, get the user ID
+  const viewerQuery = `
+    query {
+      Viewer {
+        id
+        name
+      }
+    }`;
+
+  const viewerResponse = await fetch("https://graphql.anilist.co", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      Authorization: `Bearer ${anilistToken}`,
+    },
+    body: JSON.stringify({
+      query: viewerQuery,
+    }),
+  });
+  const viewerData = await viewerResponse.json();
+  const userId = viewerData.data.Viewer.id;
+
+  // Now fetch the watching anime with the user ID
+  const query = `
+    query ($type: MediaType!, $userId: Int!) {
+      MediaListCollection(type: $type, userId: $userId, status: CURRENT) {
+        lists {
+          name
+          entries {
+            id
+            media {
+              id
+              title {
+                romaji
+                english
+                native
+              }
+              coverImage {
+                large
+              }
+              format
+            }
+          }
+        }
+      }
+    }`;
+
+  const variables = { type: "ANIME", userId: userId };
+
+  const response = await fetch("https://graphql.anilist.co", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      Authorization: `Bearer ${anilistToken}`,
+    },
+    body: JSON.stringify({
+      query: query,
+      variables: variables,
+    }),
+  });
+  const data = await response.json();
+
+  let watchingAnime = [];
+  data.data.MediaListCollection.lists.forEach((list) => {
+    list.entries.forEach((entry) => {
+      const anime = entry.media;
+      watchingAnime.push({
+        id: "ani_" + anime.id.toString(),
+        type: "series",
+        name: anime.title.english || anime.title.romaji || anime.title.native,
+        poster: anime.coverImage.large,
+        format: anime.format,
+      });
+    });
+  });
+  return watchingAnime.reverse();
+}
+
 module.exports = {
   searchAnime,
   getAnimeDetails,
   getUserWatchStatus,
   updateUserWatchList,
+  getPlanningAnime,
+  getWatchingAnime,
 };
