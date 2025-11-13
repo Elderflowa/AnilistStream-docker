@@ -217,8 +217,6 @@ app.get("/:anilistToken/stream/:type/:id.json", async (req, res) => {
       anilistToken
     );
 
-    console.log(streams);
-
     // Update user's watch status on Anilist
     updateUserWatchStatusOnAnilist(
       anilistToken,

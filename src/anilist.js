@@ -325,7 +325,6 @@ async function getWatchingAnime(anilistToken) {
   let watchingAnime = [];
   data.data.MediaListCollection.lists.forEach((list) => {
     list.entries.forEach((entry) => {
-      console.log("Entry media status:", entry.media.status);
       const anime = entry.media;
 
       watchingAnime.push({
