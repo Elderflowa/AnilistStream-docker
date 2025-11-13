@@ -4,20 +4,19 @@ const path = require("path");
 const {
   searchAnime,
   getAnimeDetails,
-  getUserWatchStatus,
-  updateUserWatchList,
   getPlanningAnime,
   getWatchingAnime,
 } = require("./src/anilist");
-const { getAnimeByAnilistId, getEpisodeUrls } = require("./src/anicli");
+const {
+  getAnimeStreams,
+  updateUserWatchStatusOnAnilist,
+  getSubtitlesUrl,
+} = require("./src/addon");
+const { getAnimeByAnilistId, getSubtitles } = require("./src/anicli");
 
 const app = express();
 app.use(cors());
-app.use(express.static("public")); // Serve static HTML from public/
-// app.use((req, res, next) => {
-//   console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
-//   next();
-// });
+app.use(express.static("public"));
 
 // ------------------- MANIFEST -------------------
 const manifest = {
@@ -54,6 +53,7 @@ const manifest = {
       idPrefixes: ["ani_"],
     },
     "stream",
+    "subtitles",
   ],
   types: ["series", "movie"],
   name: "AnilistStream",
@@ -75,7 +75,20 @@ const manifest = {
   ],
 };
 
-// ------------------- CONFIGURE ROUTES -------------------
+// app.use((req, res, next) => {
+//   const start = Date.now();
+
+//   res.on("finish", () => {
+//     const ms = Date.now() - start;
+//     console.log(
+//       `[${new Date().toISOString()}] ${req.method} ${req.originalUrl} - ${
+//         res.statusCode
+//       } (${ms}ms)`
+//     );
+//   });
+
+//   next();
+// });
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
@@ -85,12 +98,10 @@ app.get("/logo.png", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "logo.png"));
 });
 
-// Serve configuration page (no token)
 app.get("/configure", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "configure.html"));
 });
 
-// Serve configuration page with token — supports both `/configure` and `/configure.json`
 app.get(
   ["/:anilistToken/configure", "/:anilistToken/configure.json"],
   (req, res) => {
@@ -203,66 +214,20 @@ app.get("/:anilistToken/stream/:type/:id.json", async (req, res) => {
     const title = titleRaw?.replace(/[!?]/g, "");
     const episodeNumber = episodeRaw || 1;
 
-    const privateId = await getAnimeByAnilistId(animeId, title, anilistToken);
-    const sources = await getEpisodeUrls(privateId.id, episodeNumber);
-
-    const streams = sources.map((source) => ({
-      url: source.url,
-      name: "AnilistStream",
-      description: `Source: ${source.source} - Quality: ${source.quality}`,
-      subtitles: source.subtitles
-        ? [{ id: "eng", lang: "English", url: source.subtitles }]
-        : [],
-      behaviorHints: {
-        notWebReady: true,
-        proxyHeaders: {
-          request: {
-            Referer: source.referrer,
-            "User-Agent": source["user-agent"],
-          },
-        },
-      },
-    }));
+    const streams = await getAnimeStreams(
+      animeId,
+      title,
+      episodeNumber,
+      anilistToken
+    );
 
     // Update user's watch status on Anilist
-    if (anilistToken && streams.length > 0) {
-      const userWatchStatus = await getUserWatchStatus(anilistToken, animeId);
-      if (userWatchStatus) {
-        switch (userWatchStatus) {
-          case "PLANNING":
-            await updateUserWatchList(
-              anilistToken,
-              animeId,
-              episodeNumber,
-              "CURRENT"
-            );
-            break;
-          case "COMPLETED":
-            await updateUserWatchList(
-              anilistToken,
-              animeId,
-              episodeNumber,
-              "REPEATING"
-            );
-            break;
-          case "REPEATING":
-            await updateUserWatchList(
-              anilistToken,
-              animeId,
-              episodeNumber,
-              "REPEATING"
-            );
-            break;
-          default:
-            await updateUserWatchList(
-              anilistToken,
-              animeId,
-              episodeNumber,
-              "CURRENT"
-            );
-        }
-      }
-    }
+    updateUserWatchStatusOnAnilist(
+      anilistToken,
+      animeId,
+      episodeNumber,
+      streams
+    );
 
     res.json({ streams });
   } catch (err) {
@@ -281,31 +246,79 @@ app.get("/stream/:type/:id.json", async (req, res) => {
     const title = titleRaw?.replace(/[!?]/g, "");
     const episodeNumber = episodeRaw || 1;
 
-    const privateId = await getAnimeByAnilistId(animeId, title, anilistToken);
-    const sources = await getEpisodeUrls(privateId.id, episodeNumber);
-
-    const streams = sources.map((source) => ({
-      url: source.url,
-      name: "AnilistStream",
-      description: `Source: ${source.source} - Quality: ${source.quality}`,
-      subtitles: source.subtitles
-        ? [{ id: "eng", lang: "English", url: source.subtitles }]
-        : [],
-      behaviorHints: {
-        notWebReady: true,
-        proxyHeaders: {
-          request: {
-            Referer: source.referrer,
-            "User-Agent": source["user-agent"],
-          },
-        },
-      },
-    }));
+    const streams = await getAnimeStreams(
+      animeId,
+      title,
+      episodeNumber,
+      anilistToken
+    );
 
     res.json({ streams });
   } catch (err) {
     console.error("Stream error:", err);
     res.status(500).json({ streams: [] });
+  }
+});
+
+// Subtitles
+app.get(
+  "/:anilistToken/subtitles/:type/:id/filename=:filename.json",
+  async (req, res) => {
+    try {
+      const { id, filename } = req.params;
+
+      if (!id.startsWith("ani_")) return res.json({ subtitles: [] });
+
+      const allAnimeId = await getAnimeByAnilistId(
+        id.split("_")[1],
+        id.split("_")[2]
+      );
+      const subtitles = await getSubtitles(allAnimeId.id, id.split("_")[3]);
+
+      if (!subtitles) return res.status(500).json({ subtitles: [] });
+
+      return res.json({
+        subtitles: [
+          {
+            id: "eng",
+            lang: "English",
+            url: subtitles,
+          },
+        ],
+      });
+    } catch (err) {
+      console.error("Subtitles error:", err);
+      return res.json({ subtitles: [] });
+    }
+  }
+);
+
+app.get("/subtitles/:type/:id/filename=:filename.json", async (req, res) => {
+  try {
+    const { id, filename } = req.params;
+
+    if (!id.startsWith("ani_")) return res.json({ subtitles: [] });
+
+    const allAnimeId = await getAnimeByAnilistId(
+      id.split("_")[1],
+      id.split("_")[2]
+    );
+    const subtitles = await getSubtitles(allAnimeId.id, id.split("_")[3]);
+
+    if (!subtitles) return res.status(500).json({ subtitles: [] });
+
+    return res.json({
+      subtitles: [
+        {
+          id: "eng",
+          lang: "English",
+          url: subtitles,
+        },
+      ],
+    });
+  } catch (err) {
+    console.error("Subtitles error", err);
+    res.status(500).json;
   }
 });
 
