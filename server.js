@@ -76,18 +76,18 @@ const manifest = {
   ],
 };
 
-// app.use((req, res, next) => {
-//   const start = Date.now();
+app.use((req, res, next) => {
+  const start = Date.now();
 
-//   res.on("finish", () => {
-//     const ms = Date.now() - start;
-//     console.log(
-//       `${req.method} ${req.originalUrl} - ${res.statusCode} (${ms}ms)`
-//     );
-//   });
+  res.on("finish", () => {
+    const ms = Date.now() - start;
+    console.log(
+      `${req.method} ${req.originalUrl} - ${res.statusCode} (${ms}ms)`
+    );
+  });
 
-//   next();
-// });
+  next();
+});
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
