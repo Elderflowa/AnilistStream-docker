@@ -1,6 +1,16 @@
 # AniList Stremio Addon
 
+Stream anime from multiple sources while keeping your AniList watch list perfectly in sync. Search, watch, and track your progress all in one place.
+
 A Stremio addon that integrates AniList with Stremio for seamless anime streaming and watch list synchronization.
+
+## Installation & Usage
+
+Install this addon in Stremio by visiting:
+
+**https://miraitv.stremio.edmit.in**
+
+Then follow the setup steps below.
 
 ## Features
 
@@ -10,12 +20,6 @@ A Stremio addon that integrates AniList with Stremio for seamless anime streamin
 - Automatic progress synchronization with AniList
 - Multiple streaming sources with quality options
 - Subtitle support
-
-## Installation
-
-Install this addon in Stremio by visiting the addon URL:
-
-https://miraitv.stremio.edmit.in
 
 ## Setup
 
@@ -79,6 +83,10 @@ Planned tasks and enhancements for upcoming development cycles:
 ## License
 
 This project is provided as-is for personal use.
+
+## Acknowledgements
+
+This addon uses a slightly modified version of [ani-cli](https://github.com/pystardust/ani-cli) to discover and retrieve anime streaming sources.
 
 ## Support
 
