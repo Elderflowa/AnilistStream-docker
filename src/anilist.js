@@ -129,6 +129,11 @@ async function getUserWatchStatus(anilistToken, anilistId) {
     }),
   });
   const data = await response.json();
+
+  if (!data.data.Media) {
+    return null;
+  }
+
   return data.data.Media.mediaListEntry
     ? data.data.Media.mediaListEntry.status
     : null;
@@ -189,6 +194,11 @@ async function getPlanningAnime(anilistToken) {
   });
   const viewerData = await viewerResponse.json();
   console.log("Viewer data:", viewerData);
+
+  if (!viewerData.data.Viewer) {
+    return [];
+  }
+
   const userId = viewerData.data.Viewer.id;
 
   // Now fetch the planning anime with the user ID
@@ -270,7 +280,12 @@ async function getWatchingAnime(anilistToken) {
     }),
   });
   const viewerData = await viewerResponse.json();
-  const userId = viewerData.data.Viewer.id;
+
+  if (!viewerData.data.Viewer) {
+    return [];
+  }
+
+  const userId = viewerData.data?.Viewer.id;
 
   // Now fetch the watching anime with the user ID
   const query = `
