@@ -17,7 +17,7 @@ const app = express();
 const sharp = require("sharp");
 app.use(cors());
 app.use(express.static("public"));
-app.set("trust proxy", true);
+app.set("trust proxy", 1);
 
 const stats = {
   requestTimestamps: [],
@@ -34,6 +34,8 @@ app.use((req, res, next) => {
     req.socket.remoteAddress ||
     req.ip ||
     "unknown";
+
+  console.log(clientIP);
 
   stats.requestTimestamps.push(Date.now());
 
