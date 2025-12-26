@@ -66,6 +66,10 @@ app.get("/stream/:type/:id.json", async (req, res) => {
         const streams = await getAnimeStreams(animeId, title, episode);
 
         res.json({ streams });
+        for (var stream of streams) {
+            console.log(stream.name);
+            console.log(stream.behaviorHints.proxyHeaders);
+        }
     } catch (err) {
         console.log("Stream error:", err);
         res.json({ streams: [] });

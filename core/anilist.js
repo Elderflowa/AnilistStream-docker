@@ -3,22 +3,22 @@ import { getAnimeByAnilistId } from "./anicli.js";
 const BASE_URL = "https://graphql.anilist.co";
 
 async function fetchAnilist(query, variables) {
-    const response = await fetch(BASE_URL, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-        },
-        body: JSON.stringify({
-            query: query,
-            variables: variables,
-        }),
-    });
-    return response.json();
+  const response = await fetch(BASE_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({
+      query: query,
+      variables: variables,
+    }),
+  });
+  return response.json();
 }
 
 export async function searchAnime(searchQuery, type) {
-    const query = `
+  const query = `
     query ($search: String!) {
       Page {
         media(search: $search, type: ANIME) {
@@ -35,19 +35,19 @@ export async function searchAnime(searchQuery, type) {
         }
       }
     }`;
-    const variables = { search: searchQuery };
-    const data = await fetchAnilist(query, variables);
-    return data.data.Page.media.map((anime) => ({
-        id: "ani_" + anime.id.toString(),
-        type: "series",
-        name: anime.title.english || anime.title.romaji || anime.title.native,
-        poster: anime.coverImage.large,
-        format: anime.format,
-    }));
+  const variables = { search: searchQuery };
+  const data = await fetchAnilist(query, variables);
+  return data.data.Page.media.map((anime) => ({
+    id: "ani_" + anime.id.toString(),
+    type: "series",
+    name: anime.title.english || anime.title.romaji || anime.title.native,
+    poster: anime.coverImage.large,
+    format: anime.format,
+  }));
 }
 
 export async function getAnimeDetails(animeId) {
-    const query = `
+  const query = `
     query ($id: Int!) {
       Media(id: $id, type: ANIME) {
         id
@@ -72,22 +72,21 @@ export async function getAnimeDetails(animeId) {
         }
       }
     }`;
-    const variables = { id: parseInt(animeId.split("_")[1]) };
-    const data = await fetchAnilist(query, variables);
-    const anime = data.data.Media;
+  const variables = { id: parseInt(animeId.split("_")[1]) };
+  const data = await fetchAnilist(query, variables);
+  const anime = data.data.Media;
 
-    var videos = [];
-    const episodeCount =
-        anime.episodes || anime.nextAiringEpisode.episode - 1 || 0;
-    const cleanDescription = anime.description
-        ? anime.description.replace(/<\/?[^>]+(>|$)/g, "")
-        : "";
-    const title =
-        anime.title.english || anime.title.romaji || anime.title.native;
+  var videos = [];
+  const episodeCount =
+    anime.episodes || anime.nextAiringEpisode.episode - 1 || 0;
+  const cleanDescription = anime.description
+    ? anime.description.replace(/<\/?[^>]+(>|$)/g, "")
+    : "";
+  const title = anime.title.english || anime.title.romaji || anime.title.native;
 
-    const allMangaId = (await getAnimeByAnilistId(anime.id, title)).id;
+  const allMangaId = (await getAnimeByAnilistId(anime.id, title)).id;
 
-    const allMangaQuery = `
+  const allMangaQuery = `
     query($showId:String!, $episodeNumStart:Float!, $episodeNumEnd:Float!) {
       episodeInfos(
         showId: $showId,
@@ -103,82 +102,82 @@ export async function getAnimeDetails(animeId) {
     }
   `;
 
-    const allMangaVariables = {
-        showId: allMangaId,
-        episodeNumStart: 1,
-        episodeNumEnd: episodeCount,
-    };
+  const allMangaVariables = {
+    showId: allMangaId,
+    episodeNumStart: 1,
+    episodeNumEnd: episodeCount,
+  };
 
-    let allMangaData;
-    try {
-        const allMangaResponse = await fetch("https://api.allanime.day/api", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Referer: "https://allmanga.to",
-                "User-Agent": "Mozilla/5.0",
-            },
-            body: JSON.stringify({
-                query: allMangaQuery,
-                variables: allMangaVariables,
-            }),
-        });
+  let allMangaData;
+  try {
+    const allMangaResponse = await fetch("https://api.allanime.day/api", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Referer: "https://allmanga.to",
+        "User-Agent": "Mozilla/5.0",
+      },
+      body: JSON.stringify({
+        query: allMangaQuery,
+        variables: allMangaVariables,
+      }),
+    });
 
-        allMangaData = await allMangaResponse.json();
-    } catch (e) {
-        console.error("AllAnime Error →", e);
-        allMangaData = { data: { episodeInfos: [] } };
-    }
+    allMangaData = await allMangaResponse.json();
+  } catch (e) {
+    console.error("AllAnime Error →", e);
+    allMangaData = { data: { episodeInfos: [] } };
+  }
 
-    const episodeInfos = allMangaData?.data?.episodeInfos ?? [];
+  const episodeInfos = allMangaData?.data?.episodeInfos ?? [];
 
-    for (var i = 0; i < episodeCount; i++) {
-        var ep;
-        var thumbnail = "";
+  for (var i = 0; i < episodeCount; i++) {
+    var ep;
+    var thumbnail = "";
 
-        for (var info of episodeInfos) {
-            if (info.episodeIdNum === i + 1) {
-                ep = info;
-                for (var t of info.thumbnails) {
-                    if (t.includes("https")) {
-                        thumbnail = t;
-                        break;
-                    } else {
-                        thumbnail = `https://api.allmanga.to${t}`;
-                    }
-                }
-                break;
-            }
+    for (var info of episodeInfos) {
+      if (info.episodeIdNum === i + 1) {
+        ep = info;
+        for (var t of info.thumbnails) {
+          if (t.includes("https")) {
+            thumbnail = t;
+            break;
+          } else {
+            thumbnail = `https://api.allmanga.to${t}`;
+          }
         }
-
-        videos.push({
-            id: `ani_${anime.id}_${title.replace("?", "").replace("!", "")}_${i + 1}`,
-            title: ep.notes
-                ? `${i + 1}. ${ep.notes.split("<")[0]}`
-                : `Episode ${i + 1}`,
-            episode: episodeCount - i + 1,
-            type: "episode",
-            available: true,
-            thumbnail: thumbnail,
-        });
+        break;
+      }
     }
-    return {
-        id: "ani_" + anime.id.toString(),
-        type: "series",
-        name: title,
-        genres: anime.genres,
-        poster: anime.coverImage.large,
-        background: anime.bannerImage,
-        description: cleanDescription,
-        releaseInfo: anime.seasonYear,
-        imdbRating: anime.averageScore,
-        videos: videos,
-        status: anime.status,
-    };
+
+    videos.push({
+      id: `ani_${anime.id}_${title.replace("?", "").replace("!", "")}_${i + 1}`,
+      title: ep.notes
+        ? `${i + 1}. ${ep.notes.split("<")[0]}`
+        : `Episode ${i + 1}`,
+      episode: episodeCount - i + 1,
+      type: "episode",
+      available: true,
+      thumbnail: thumbnail,
+    });
+  }
+  return {
+    id: "ani_" + anime.id.toString(),
+    type: "series",
+    name: title,
+    genres: anime.genres,
+    poster: anime.coverImage.large,
+    background: anime.bannerImage,
+    description: cleanDescription,
+    releaseInfo: anime.seasonYear,
+    imdbRating: anime.averageScore,
+    videos: videos,
+    status: anime.status,
+  };
 }
 
 export async function getUserWatchStatus(anilistToken, anilistId) {
-    const query = `
+  const query = `
     query ($id: Int!) {
       Media(id: $id, type: ANIME) {
         id
@@ -187,46 +186,46 @@ export async function getUserWatchStatus(anilistToken, anilistId) {
         }
       }
     }`;
-    const variables = { id: parseInt(anilistId) };
-    const response = await fetch("https://graphql.anilist.co", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-            Authorization: `Bearer ${anilistToken}`,
-        },
-        body: JSON.stringify({
-            query: query,
-            variables: variables,
-        }),
-    });
-    const data = await response.json();
+  const variables = { id: parseInt(anilistId) };
+  const response = await fetch("https://graphql.anilist.co", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      Authorization: `Bearer ${anilistToken}`,
+    },
+    body: JSON.stringify({
+      query: query,
+      variables: variables,
+    }),
+  });
+  const data = await response.json();
 
-    if (!data.data.Media) {
-        return null;
-    }
+  if (!data.data.Media) {
+    return null;
+  }
 
-    return data.data.Media.mediaListEntry
-        ? data.data.Media.mediaListEntry.status
-        : null;
+  return data.data.Media.mediaListEntry
+    ? data.data.Media.mediaListEntry.status
+    : null;
 }
 
 export async function updateUserWatchList(
-    anilistToken,
-    anilistId,
-    progress,
-    status,
+  anilistToken,
+  anilistId,
+  progress,
+  status
 ) {
-    const animeDetails = await getAnimeDetails("ani_" + anilistId);
+  const animeDetails = await getAnimeDetails("ani_" + anilistId);
 
-    if (
-        progress >= animeDetails.videos.length &&
-        animeDetails.status != "RELEASING"
-    ) {
-        status = "COMPLETED";
-    }
+  if (
+    progress >= animeDetails.videos.length &&
+    animeDetails.status != "RELEASING"
+  ) {
+    status = "COMPLETED";
+  }
 
-    const mutation = `
+  const mutation = `
     mutation ($mediaId: Int!, $status: MediaListStatus!, $progress: Int!) {
       SaveMediaListEntry(mediaId: $mediaId, status: $status, progress: $progress) {
         id
@@ -234,26 +233,26 @@ export async function updateUserWatchList(
         progress
       }
     }`;
-    const variables = { mediaId: parseInt(anilistId), status, progress };
-    const response = await fetch("https://graphql.anilist.co", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-            Authorization: `Bearer ${anilistToken}`,
-        },
-        body: JSON.stringify({
-            query: mutation,
-            variables: variables,
-        }),
-    });
-    const data = await response.json();
-    return data.data.SaveMediaList || null;
+  const variables = { mediaId: parseInt(anilistId), status, progress };
+  const response = await fetch("https://graphql.anilist.co", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      Authorization: `Bearer ${anilistToken}`,
+    },
+    body: JSON.stringify({
+      query: mutation,
+      variables: variables,
+    }),
+  });
+  const data = await response.json();
+  return data.data.SaveMediaList || null;
 }
 
 export async function getPlanningAnime(anilistToken) {
-    // First, get the user ID
-    const viewerQuery = `
+  // First, get the user ID
+  const viewerQuery = `
     query {
       Viewer {
         id
@@ -261,28 +260,28 @@ export async function getPlanningAnime(anilistToken) {
       }
     }`;
 
-    const viewerResponse = await fetch("https://graphql.anilist.co", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-            Authorization: `Bearer ${anilistToken}`,
-        },
-        body: JSON.stringify({
-            query: viewerQuery,
-        }),
-    });
-    const viewerData = await viewerResponse.json();
-    console.log("Viewer data:", viewerData);
+  const viewerResponse = await fetch("https://graphql.anilist.co", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      Authorization: `Bearer ${anilistToken}`,
+    },
+    body: JSON.stringify({
+      query: viewerQuery,
+    }),
+  });
+  const viewerData = await viewerResponse.json();
+  console.log("Viewer data:", viewerData);
 
-    if (!viewerData.data.Viewer) {
-        return [];
-    }
+  if (!viewerData.data.Viewer) {
+    return [];
+  }
 
-    const userId = viewerData.data.Viewer.id;
+  const userId = viewerData.data.Viewer.id;
 
-    // Now fetch the planning anime with the user ID
-    const query = `
+  // Now fetch the planning anime with the user ID
+  const query = `
     query ($type: MediaType!, $userId: Int!) {
       MediaListCollection(type: $type, userId: $userId, status: PLANNING) {
         lists {
@@ -306,44 +305,41 @@ export async function getPlanningAnime(anilistToken) {
       }
     }`;
 
-    const variables = { type: "ANIME", userId: userId };
+  const variables = { type: "ANIME", userId: userId };
 
-    const response = await fetch("https://graphql.anilist.co", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-            Authorization: `Bearer ${anilistToken}`,
-        },
-        body: JSON.stringify({
-            query: query,
-            variables: variables,
-        }),
-    });
-    const data = await response.json();
+  const response = await fetch("https://graphql.anilist.co", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      Authorization: `Bearer ${anilistToken}`,
+    },
+    body: JSON.stringify({
+      query: query,
+      variables: variables,
+    }),
+  });
+  const data = await response.json();
 
-    let planningAnime = [];
-    data.data.MediaListCollection.lists.forEach((list) => {
-        list.entries.forEach((entry) => {
-            const anime = entry.media;
-            planningAnime.push({
-                id: "ani_" + anime.id.toString(),
-                type: "series",
-                name:
-                    anime.title.english ||
-                    anime.title.romaji ||
-                    anime.title.native,
-                poster: anime.coverImage.large,
-                format: anime.format,
-            });
-        });
+  let planningAnime = [];
+  data.data.MediaListCollection.lists.forEach((list) => {
+    list.entries.forEach((entry) => {
+      const anime = entry.media;
+      planningAnime.push({
+        id: "ani_" + anime.id.toString(),
+        type: "series",
+        name: anime.title.english || anime.title.romaji || anime.title.native,
+        poster: anime.coverImage.large,
+        format: anime.format,
+      });
     });
-    return planningAnime.reverse();
+  });
+  return planningAnime.reverse();
 }
 
 export async function getWatchingAnime(anilistToken) {
-    // First, get the user ID
-    const viewerQuery = `
+  // First, get the user ID
+  const viewerQuery = `
     query {
       Viewer {
         id
@@ -351,27 +347,27 @@ export async function getWatchingAnime(anilistToken) {
       }
     }`;
 
-    const viewerResponse = await fetch("https://graphql.anilist.co", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-            Authorization: `Bearer ${anilistToken}`,
-        },
-        body: JSON.stringify({
-            query: viewerQuery,
-        }),
-    });
-    const viewerData = await viewerResponse.json();
+  const viewerResponse = await fetch("https://graphql.anilist.co", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      Authorization: `Bearer ${anilistToken}`,
+    },
+    body: JSON.stringify({
+      query: viewerQuery,
+    }),
+  });
+  const viewerData = await viewerResponse.json();
 
-    if (!viewerData.data.Viewer) {
-        return [];
-    }
+  if (!viewerData.data.Viewer) {
+    return [];
+  }
 
-    const userId = viewerData.data?.Viewer.id;
+  const userId = viewerData.data?.Viewer.id;
 
-    // Now fetch the watching anime with the user ID
-    const query = `
+  // Now fetch the watching anime with the user ID
+  const query = `
     query ($type: MediaType!, $userId: Int!) {
       MediaListCollection(type: $type, userId: $userId, status: CURRENT) {
         lists {
@@ -402,65 +398,62 @@ export async function getWatchingAnime(anilistToken) {
       }
     }`;
 
-    const variables = { type: "ANIME", userId: userId };
+  const variables = { type: "ANIME", userId: userId };
 
-    const response = await fetch("https://graphql.anilist.co", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-            Authorization: `Bearer ${anilistToken}`,
-        },
-        body: JSON.stringify({
-            query: query,
-            variables: variables,
-        }),
+  const response = await fetch("https://graphql.anilist.co", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      Authorization: `Bearer ${anilistToken}`,
+    },
+    body: JSON.stringify({
+      query: query,
+      variables: variables,
+    }),
+  });
+  const data = await response.json();
+
+  let watchingAnime = [];
+  data.data.MediaListCollection.lists.forEach((list) => {
+    list.entries.forEach((entry) => {
+      const anime = entry.media;
+
+      watchingAnime.push({
+        id: "ani_" + anime.id.toString(),
+        type: "series",
+        name: anime.title.english || anime.title.romaji || anime.title.native,
+        poster:
+          anime.status === "RELEASING"
+            ? `https://aniliststream.edmit.in/poster/${anime.id}.png` +
+              `?url=${encodeURIComponent(anime.coverImage.large)}` +
+              `&status=${anime.status}` +
+              `&progress=${entry.progress || 0}` +
+              `&episodes=${anime.nextAiringEpisode?.episode - 1 || 0}` +
+              `&nextAir=${anime.nextAiringEpisode?.airingAt || 0}`
+            : anime.coverImage.large,
+
+        format: anime.format,
+      });
     });
-    const data = await response.json();
-
-    let watchingAnime = [];
-    data.data.MediaListCollection.lists.forEach((list) => {
-        list.entries.forEach((entry) => {
-            const anime = entry.media;
-
-            watchingAnime.push({
-                id: "ani_" + anime.id.toString(),
-                type: "series",
-                name:
-                    anime.title.english ||
-                    anime.title.romaji ||
-                    anime.title.native,
-                poster:
-                    anime.status === "RELEASING"
-                        ? `https://miraitv.stremio.edmit.in/poster/${anime.id}.png` +
-                          `?url=${encodeURIComponent(anime.coverImage.large)}` +
-                          `&status=${anime.status}` +
-                          `&progress=${entry.progress || 0}` +
-                          `&episodes=${anime.nextAiringEpisode?.episode - 1 || 0}` +
-                          `&nextAir=${anime.nextAiringEpisode?.airingAt || 0}`
-                        : anime.coverImage.large,
-
-                format: anime.format,
-            });
-        });
-    });
-    return watchingAnime.reverse();
+  });
+  return watchingAnime.reverse();
 }
 
 export async function getAnilistId(kitsuId) {
-    // const idsMoeApiKey = "ids_99vvbg0fSt5EE9hQi7AVVzZRb29nkaqgxOOtOOxNBKE";
-    const idsMoeApiKey = process.env.IDS_MOE_API_KEY;
+  // const idsMoeApiKey = "ids_99vvbg0fSt5EE9hQi7AVVzZRb29nkaqgxOOtOOxNBKE";
+  const idsMoeApiKey = process.env.IDS_MOE_API_KEY;
 
-    const response = await fetch(
-        `https://api.ids.moe/ids/${kitsuId}?platform=kitsu`,
-        {
-            headers: {
-                Authorization: `Bearer ${idsMoeApiKey}`,
-            },
-        },
-    );
+  const response = await fetch(
+    `https://api.ids.moe/ids/${kitsuId}?platform=kitsu`,
+    {
+      headers: {
+        Authorization: `Bearer ${idsMoeApiKey}`,
+      },
+    }
+  );
 
-    const data = await response.json();
+  const data = await response.json();
 
-    return [data.anilist, data.title];
+  return [data.anilist, data.title];
 }

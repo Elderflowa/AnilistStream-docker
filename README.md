@@ -17,7 +17,7 @@ It is designed to work seamlessly inside Stremio while sourcing anime streams fr
 
 Install the addon in Stremio by visiting:
 
-**https://miraitv.stremio.edmit.in**
+**https://aniliststream.edmit.in**
 
 Open Stremio and start streaming anime.
 
@@ -46,15 +46,18 @@ Open Stremio and start streaming anime.
 ## How It Works
 
 ### Search
+
 Anime search is powered by AniList metadata, providing accurate titles, episodes, and season information.
 
 ### Watch Lists
+
 - Shows anime you are currently watching
 - Shows anime you are planning to watch
 - Automatically updates AniList status when you start or finish watching
 - Saves episode progress automatically
 
 ### Streaming
+
 - Streams anime episodes over **direct HTTP sources**
 - Multiple providers per episode when available
 - Automatic episode availability detection
@@ -77,14 +80,17 @@ Anime search is powered by AniList metadata, providing accurate titles, episodes
 ## FAQ
 
 ### Is this a torrent addon?
+
 No.  
 AnilistStream provides **direct HTTP streams only**.
 
 ### Are my credentials stored?
+
 No.  
 The addon does not store user credentials or personal data externally.
 
 ### Why is there a custom catalog?
+
 The custom catalog exists to improve AniList-specific behavior and matching.  
 Based on user feedback, it may be removed in the future, with everything relying entirely on **AnimeKitsu** catalogs instead.
 
@@ -95,6 +101,7 @@ Based on user feedback, it may be removed in the future, with everything relying
 Contributions are welcome.
 
 If you want to help:
+
 - Improve stream discovery
 - Improve AniList ↔ catalog matching
 - Add tests or CI/CD
