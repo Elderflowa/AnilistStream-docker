@@ -160,7 +160,7 @@ get_links() {
         *) [ -n "$episode_link" ] && printf "%s\n" "$episode_link" ;;
     esac
 
-    printf "%s" "$*" | grep -q "tools.fast4speed.rsvp" && printf "%s\n" "Yt >$*"
+    # printf "%s" "$*" | grep -q "tools.fast4speed.rsvp" && printf "%s\n" "Yt >$*"
     # printf "\033[1;32m%s\033[0m Links Fetched\n" "$provider_name" 1>&2
 }
 
@@ -175,7 +175,7 @@ provider_init() {
 generate_link() {
     case $1 in
         1) provider_init "wixmp" "/Default :/p" ;;    # wixmp(default)(m3u8)(multi) -> (mp4)(multi)
-        2) provider_init "youtube" "/Yt-mp4 :/p" ;;   # youtube(mp4)(single)
+        # 2) provider_init "youtube" "/Yt-mp4 :/p" ;;   # youtube(mp4)(single)
         3) provider_init "sharepoint" "/S-mp4 :/p" ;; # sharepoint(mp4)(single)
         *) provider_init "hianime" "/Luf-Mp4 :/p" ;;  # hianime(m3u8)(multi)
     esac
@@ -213,7 +213,7 @@ get_episode_url() {
     resp=$(curl -e "$allanime_refr" -s -G "${allanime_api}/api" --data-urlencode "variables={\"showId\":\"$id\",\"translationType\":\"$mode\",\"episodeString\":\"$ep_no\"}" --data-urlencode "query=$episode_embed_gql" -A "$agent" | tr '{}' '\n' | sed 's|\\u002F|\/|g;s|\\||g' | sed -nE 's|.*sourceUrl":"--([^"]*)".*sourceName":"([^"]*)".*|\2 :\1|p')
     # generate links into sequential files
     cache_dir="$(mktemp -d)"
-    providers="1 2 3 4"
+    providers="1 3 4"
     for provider in $providers; do
         generate_link "$provider" >"$cache_dir"/"$provider" &
     done
