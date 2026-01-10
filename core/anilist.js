@@ -272,7 +272,6 @@ export async function getPlanningAnime(anilistToken) {
     }),
   });
   const viewerData = await viewerResponse.json();
-  console.log("Viewer data:", viewerData);
 
   if (!viewerData.data.Viewer) {
     return [];
