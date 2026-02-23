@@ -21,7 +21,6 @@ ghcr.io/elderflowa/anistream-docker:latest
 ---
 
 ## What This Addon Is
-
 See original repository [https://](https://github.com/Saadiq8149/AnilistStream)
 ---
 
