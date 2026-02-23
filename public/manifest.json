@@ -1,6 +1,6 @@
 {
-  "id": "community.AnilistStream",
-  "version": "1.1.0",
+  "id": "community.anistream",
+  "version": "0.1.0",
   "catalogs": [
     {
       "type": "series",
@@ -35,10 +35,10 @@
     "subtitles"
   ],
   "types": ["series", "movie"],
-  "name": "AnilistStream",
+  "name": "anistream",
   "description": "Streaming anime and Anilist sync",
   "idPrefixes": ["ani_", "kitsu"],
-  "logo": "https://aniliststream.edmit.in/logo.png",
+  "logo": "https://{{BASE_URL}}/logo.png",
   "behaviorHints": {
     "configurable": true,
     "configurationRequired": false

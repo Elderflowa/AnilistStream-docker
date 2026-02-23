@@ -424,7 +424,7 @@ export async function getWatchingAnime(anilistToken) {
         name: anime.title.english || anime.title.romaji || anime.title.native,
         poster:
           anime.status === "RELEASING"
-            ? `https://aniliststream.edmit.in/poster/${anime.id}.png` +
+            ? `https://anistream.eldr.uk/poster/${anime.id}.png` +
               `?url=${encodeURIComponent(anime.coverImage.large)}` +
               `&status=${anime.status}` +
               `&progress=${entry.progress || 0}` +

@@ -2,7 +2,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AnilistStream Configuration</title>
+    <title>anistream</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="styles.css" />
   </head>
@@ -13,18 +13,18 @@
     <div class="w-full max-w-[500px] text-center">
       <!-- Title -->
       <h1 class="mb-3 text-4xl max-sm:text-3xl font-bold">
-        <span class="text-white">Anilist</span
-        ><span class="text-[var(--primary)]">Stream</span>
+        <span class="text-white">ani</span
+        ><span class="text-[var(--primary)]">stream</span>
       </h1>
 
       <p class="mb-6 text-sm text-[var(--text-muted)]">
-        Connect your AniList account to install the addon
+        Login to Anilist
       </p>
 
       <!-- LOGIN STATE -->
       <div id="login-state">
         <a
-          href="https://anilist.co/api/v2/oauth/authorize?client_id=28129&response_type=token"
+          href="{{ANILIST_AUTH_URL}}"
           class="inline-block rounded-lg px-8 py-3 font-bold text-white bg-gradient-to-br from-[var(--primary)] to-[var(--primary-dark)] shadow-[0_4px_15px_rgba(0,102,204,0.4)] hover:shadow-[0_6px_20px_rgba(0,102,204,0.6)] hover:-translate-y-0.5 transition-all duration-300"
           >Login with AniList</a
         >
@@ -95,7 +95,7 @@
 
           installBtn.addEventListener("click", () => {
             const stremioUrl =
-              "stremio://aniliststream.edmit.in/" +
+              "https://{{BASE_URL}}/" +
               encodeURIComponent(token) +
               "/manifest.json";
 
